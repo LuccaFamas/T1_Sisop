@@ -20,6 +20,7 @@ public class Instruction {
 
     @Override
     public String toString() {
+
         if (operand == null) {
             return operation;
         }
