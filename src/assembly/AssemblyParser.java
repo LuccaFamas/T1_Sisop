@@ -25,17 +25,17 @@ public class AssemblyParser {
                 continue;
             }
 
-            if (line.equals(".code") || line.equals(".endcode")) {
+            if (line.equals(".code") ||
+                line.equals(".endcode")) {
                 continue;
             }
 
-            // Detecta um label, por exemplo: loop:
+            // Exemplo:
+            // loop:
             if (line.endsWith(":")) {
 
-                String label = line.substring(
-                    0,
-                    line.length() - 1
-                );
+                String label =
+                    line.substring(0, line.length() - 1);
 
                 labels.put(label, instructions.size());
 

@@ -16,6 +16,7 @@ public class Memory {
     }
 
     public int get(String name) {
+
         if (!variables.containsKey(name)) {
             throw new IllegalArgumentException(
                 "Variável não encontrada: " + name

@@ -1,9 +1,9 @@
 package cpu;
 
-import java.util.Map;
-
 import assembly.Instruction;
 import process.Process;
+
+import java.util.Map;
 
 public class InstructionExecutor {
 
@@ -13,11 +13,14 @@ public class InstructionExecutor {
     public InstructionExecutor(
             Memory memory,
             Map<String, Integer> labels) {
+
         this.memory = memory;
         this.labels = labels;
     }
 
-    public void execute(Instruction instruction, Process process) {
+    public ExecutionResult execute(
+            Instruction instruction,
+            Process process) {
 
         String operation = instruction.getOperation();
         String operand = instruction.getOperand();
@@ -25,157 +28,247 @@ public class InstructionExecutor {
         switch (operation) {
 
             case "LOAD":
-                executeLoad(process, operand);
-                break;
+                executeLoad(operand, process);
+                return ExecutionResult.CONTINUE;
 
             case "STORE":
-                executeStore(process, operand);
-                break;
+                executeStore(operand, process);
+                return ExecutionResult.CONTINUE;
 
             case "ADD":
-                executeAdd(process, operand);
-                break;
+                executeAdd(operand, process);
+                return ExecutionResult.CONTINUE;
 
             case "SUB":
-                executeSub(process, operand);
-                break;
+                executeSub(operand, process);
+                return ExecutionResult.CONTINUE;
 
             case "MULT":
-                executeMult(process, operand);
-                break;
+                executeMult(operand, process);
+                return ExecutionResult.CONTINUE;
 
             case "DIV":
-                executeDiv(process, operand);
-                break;
+                executeDiv(operand, process);
+                return ExecutionResult.CONTINUE;
 
             case "BRANY":
-                executeBrany(process, operand);
-                break;
+                executeBrany(operand, process);
+                return ExecutionResult.CONTINUE;
 
             case "BRPOS":
-                executeBrpos(process, operand);
-                break;
+                executeBrpos(operand, process);
+                return ExecutionResult.CONTINUE;
 
             case "BRZERO":
-                executeBrzero(process, operand);
-                break;
+                executeBrzero(operand, process);
+                return ExecutionResult.CONTINUE;
 
             case "BRNEG":
-                executeBrneg(process, operand);
-                break;
+                executeBrneg(operand, process);
+                return ExecutionResult.CONTINUE;
+
+            case "SYSCALL":
+                return executeSyscall(operand);
 
             default:
                 throw new IllegalArgumentException(
-                        "Operação desconhecida: " + operation);
+                    "Instrução desconhecida: " + operation
+                );
         }
     }
 
-    private void executeLoad(Process process, String operand) {
+    private void executeLoad(
+            String operand,
+            Process process) {
 
         int value = resolveOperand(operand);
 
         process.setAcc(value);
-        process.setPc(process.getPc() + 1);
-    }
-
-    private void executeStore(Process process, String operand) {
-
-        memory.set(operand, process.getAcc());
 
         process.setPc(process.getPc() + 1);
     }
 
-    private void executeAdd(Process process, String operand) {
+    private void executeStore(
+            String operand,
+            Process process) {
+
+        memory.set(
+            operand,
+            process.getAcc()
+        );
+
+        process.setPc(process.getPc() + 1);
+    }
+
+    private void executeAdd(
+            String operand,
+            Process process) {
 
         int value = resolveOperand(operand);
 
-        process.setAcc(process.getAcc() + value);
+        process.setAcc(
+            process.getAcc() + value
+        );
+
         process.setPc(process.getPc() + 1);
     }
 
-    private void executeSub(Process process, String operand) {
+    private void executeSub(
+            String operand,
+            Process process) {
 
         int value = resolveOperand(operand);
 
-        process.setAcc(process.getAcc() - value);
+        process.setAcc(
+            process.getAcc() - value
+        );
+
         process.setPc(process.getPc() + 1);
     }
 
-    private void executeMult(Process process, String operand) {
+    private void executeMult(
+            String operand,
+            Process process) {
 
         int value = resolveOperand(operand);
 
-        process.setAcc(process.getAcc() * value);
+        process.setAcc(
+            process.getAcc() * value
+        );
+
         process.setPc(process.getPc() + 1);
     }
 
-    private void executeDiv(Process process, String operand) {
+    private void executeDiv(
+            String operand,
+            Process process) {
 
         int value = resolveOperand(operand);
 
         if (value == 0) {
-            throw new ArithmeticException("Divisão por zero");
+            throw new ArithmeticException(
+                "Divisão por zero"
+            );
         }
 
-        process.setAcc(process.getAcc() / value);
+        process.setAcc(
+            process.getAcc() / value
+        );
+
         process.setPc(process.getPc() + 1);
     }
 
-    private int resolveOperand(String operand) {
-
-        if (operand.startsWith("#")) {
-
-            return Integer.parseInt(
-                    operand.substring(1));
-        }
-
-        return memory.get(operand);
-    }
-
     private void executeBrany(
-            Process process,
-            String label) {
-        process.setPc(getLabelPosition(label));
+            String operand,
+            Process process) {
+
+        process.setPc(
+            getLabelPosition(operand)
+        );
     }
 
     private void executeBrpos(
-            Process process,
-            String label) {
-        if (process.getAcc() > 0) {
-            process.setPc(getLabelPosition(label));
-        } else {
-            process.setPc(process.getPc() + 1);
-        }
-    }
+            String operand,
+            Process process) {
 
-    private void executeBrneg(
-            Process process,
-            String label) {
-        if (process.getAcc() < 0) {
-            process.setPc(getLabelPosition(label));
+        if (process.getAcc() > 0) {
+
+            process.setPc(
+                getLabelPosition(operand)
+            );
+
         } else {
-            process.setPc(process.getPc() + 1);
+
+            process.setPc(
+                process.getPc() + 1
+            );
         }
     }
 
     private void executeBrzero(
-            Process process,
-            String label) {
+            String operand,
+            Process process) {
+
         if (process.getAcc() == 0) {
-            process.setPc(getLabelPosition(label));
+
+            process.setPc(
+                getLabelPosition(operand)
+            );
+
         } else {
-            process.setPc(process.getPc() + 1);
+
+            process.setPc(
+                process.getPc() + 1
+            );
         }
+    }
+
+    private void executeBrneg(
+            String operand,
+            Process process) {
+
+        if (process.getAcc() < 0) {
+
+            process.setPc(
+                getLabelPosition(operand)
+            );
+
+        } else {
+
+            process.setPc(
+                process.getPc() + 1
+            );
+        }
+    }
+
+    private ExecutionResult executeSyscall(
+            String operand) {
+
+        int syscall = Integer.parseInt(operand);
+
+        switch (syscall) {
+
+            case 0:
+                return ExecutionResult.SYSCALL_HALT;
+
+            case 1:
+                return ExecutionResult.SYSCALL_PRINT;
+
+            case 2:
+                return ExecutionResult.SYSCALL_READ;
+
+            default:
+                throw new IllegalArgumentException(
+                    "SYSCALL inválido: " + syscall
+                );
+        }
+    }
+
+    private int resolveOperand(String operand) {
+
+        // Modo imediato
+        // Exemplo: #5
+        if (operand.startsWith("#")) {
+
+            return Integer.parseInt(
+                operand.substring(1)
+            );
+        }
+
+        // Modo direto
+        // Exemplo: valor
+        return memory.get(operand);
     }
 
     private int getLabelPosition(String label) {
 
         if (!labels.containsKey(label)) {
+
             throw new IllegalArgumentException(
-                    "Label não encontrado: " + label);
+                "Label não encontrada: " + label
+            );
         }
 
         return labels.get(label);
     }
-
 }
