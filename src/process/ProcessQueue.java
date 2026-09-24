@@ -5,21 +5,21 @@ import java.util.Queue;
 
 public class ProcessQueue {
 
-    private Queue<Process> processes;
+    private Queue<PCB> processes;
 
     public ProcessQueue() {
         processes = new LinkedList<>();
     }
 
-    public void add(Process process) {
+    public void add(PCB process) {
         processes.add(process);
     }
 
-    public Process remove() {
+    public PCB remove() {
         return processes.poll();
     }
 
-    public Process peek() {
+    public PCB peek() {
         return processes.peek();
     }
 

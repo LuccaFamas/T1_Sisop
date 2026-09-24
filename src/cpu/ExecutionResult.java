@@ -1,5 +1,6 @@
 package cpu;
 
+// O que o SO precisa fazer depois da instrução.
 public enum ExecutionResult {
 
     CONTINUE,

@@ -2,29 +2,39 @@ package assembly;
 
 public class Instruction {
 
-    private String operation;
-    private String operand;
+    private final InstructionType type;
 
-    public Instruction(String operation, String operand) {
-        this.operation = operation;
+    // Já normalizado pelo parser:
+    // imediato "#n", variável/label em minúsculas, SYSCALL "0".."2"
+    private final String operand;
+
+    // Linha no arquivo .asm, para mensagens de erro
+    private final int lineNumber;
+
+    public Instruction(
+            InstructionType type,
+            String operand,
+            int lineNumber) {
+
+        this.type = type;
         this.operand = operand;
+        this.lineNumber = lineNumber;
     }
 
-    public String getOperation() {
-        return operation;
+    public InstructionType getType() {
+        return type;
     }
 
     public String getOperand() {
         return operand;
     }
 
+    public int getLineNumber() {
+        return lineNumber;
+    }
+
     @Override
     public String toString() {
-
-        if (operand == null) {
-            return operation;
-        }
-
-        return operation + " " + operand;
+        return type + " " + operand;
     }
 }

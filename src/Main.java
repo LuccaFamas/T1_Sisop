@@ -1,78 +1,109 @@
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
+import assembly.AssemblyParseException;
 import assembly.AssemblyParser;
-import assembly.Instruction;
+import assembly.Program;
+import cpu.ExecutionException;
+import cpu.ExecutionResult;
 import cpu.InstructionExecutor;
-import cpu.Memory;
-import process.Process;
+import process.PCB;
+import process.ProcessState;
+import simulation.OperatingSystem;
 
+// Fase 2: executa cada processo até o fim, instrução por instrução,
+// SEM escalonador (um processo depois do outro). Será substituído
+// pela carga via configuração na Fase 6.
 public class Main {
 
     public static void main(String[] args) {
 
-        Memory memory = new Memory();
+        String[] files = args;
 
-        memory.set("valor", 10);
+        // Padrão: dois processos com o MESMO programa. Se a memória
+        // fosse compartilhada, P02 leria valor = 15 e imprimiria 20.
+        if (files.length == 0) {
+            files = new String[] {
+                "programas/teste1.asm",
+                "programas/teste1.asm"
+            };
+        }
 
-        Process process = new Process(
-                "P1",
-                0,
-                3);
+        AssemblyParser parser = new AssemblyParser();
+        List<PCB> processes = new ArrayList<>();
 
+        for (int i = 0; i < files.length; i++) {
 
-                AssemblyParser parser = new AssemblyParser();
+            try {
+                Program program = parser.parseFile(Paths.get(files[i]));
+                String name = String.format("P%02d", i + 1);
+                processes.add(new PCB(name, 0, 3, program));
+            } catch (AssemblyParseException e) {
+                System.out.println("Erro de sintaxe: " + e.getMessage());
+                return;
+            } catch (IOException e) {
+                System.out.println("Erro ao ler arquivo: " + e.getMessage());
+                return;
+            }
+        }
 
-        List<String> code = List.of(
-        "LOAD limite",
-        "loop:",
-        "SUB #1",
-        "STORE temp",
-        "BRPOS loop",
-        "SYSCALL 0"
-        );  
+        InstructionExecutor executor = new InstructionExecutor();
+        OperatingSystem os = new OperatingSystem();
 
-        List<Instruction> instructions =
-        parser.parseCode(code);
+        for (PCB pcb : processes) {
 
-            System.out.println("Labels:");
-        System.out.println(parser.getLabels());
+            System.out.println("=== " + pcb.getName()
+                + " (" + pcb.getProgram().getSourceName() + ")");
 
-        InstructionExecutor executor =
-            new InstructionExecutor(
-            memory,
-            parser.getLabels()
-        );
+            int time = 0;
 
-        for (int i = 0; i < instructions.size(); i++) {
-        System.out.println(
-            i + " -> " + instructions.get(i)
-        );
+            while (pcb.getState() != ProcessState.FINISHED) {
+
+                int pc = pcb.getPc();
+                String text = pc < pcb.getProgram().getInstructions().size()
+                    ? pcb.getProgram().getInstructions().get(pc).toString()
+                    : "(fora do programa)";
+
+                pcb.setState(ProcessState.RUNNING);
+
+                try {
+                    ExecutionResult result = executor.execute(pcb);
+                    os.handleExecutionResult(result, pcb, time);
+                } catch (ExecutionException e) {
+                    os.handleExecutionError(pcb, e.getMessage());
+                }
+
+                System.out.println(String.format(
+                    "  t=%-2d pc=%-2d %-14s -> acc=%d, próximo pc=%d, %s",
+                    time, pc, text, pcb.getAcc(), pcb.getPc(), pcb.getState()));
+
+                // Sem escalonador: o bloqueio é só registrado e o
+                // processo segue direto.
+                if (pcb.getState() == ProcessState.BLOCKED) {
+                    pcb.setState(ProcessState.READY);
+                }
+
+                time++;
+            }
+
+            System.out.println("  memória final: "
+                + pcb.getProgram().getData().keySet() + " = "
+                + memoryValues(pcb)
+                + (pcb.hasEndedWithError() ? "  (erro)" : ""));
+            System.out.println();
+        }
     }
-    
-        Instruction load = new Instruction("LOAD", "valor");
 
-        Instruction add = new Instruction("ADD", "#5");
+    private static String memoryValues(PCB pcb) {
 
-        Instruction store = new Instruction("STORE", "valor");
+        List<Integer> values = new ArrayList<>();
 
-        executor.execute(load, process);
+        for (String name : pcb.getProgram().getData().keySet()) {
+            values.add(pcb.getMemory().get(name));
+        }
 
-        System.out.println("Depois do LOAD:");
-        System.out.println("ACC = " + process.getAcc());
-        System.out.println("PC = " + process.getPc());
-
-        executor.execute(add, process);
-
-        System.out.println("\nDepois do ADD:");
-        System.out.println("ACC = " + process.getAcc());
-        System.out.println("PC = " + process.getPc());
-
-        executor.execute(store, process);
-
-        System.out.println("\nDepois do STORE:");
-        System.out.println("ACC = " + process.getAcc());
-        System.out.println("PC = " + process.getPc());
-        System.out.println("valor = " + memory.get("valor"));
-
+        return values.toString();
     }
 }

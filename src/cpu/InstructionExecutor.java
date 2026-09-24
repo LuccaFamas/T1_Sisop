@@ -1,274 +1,124 @@
 package cpu;
 
 import assembly.Instruction;
-import process.Process;
+import assembly.InstructionType;
+import process.PCB;
 
-import java.util.Map;
+import java.util.List;
 
+// Executa UMA instrução de um processo.
+// Sem estado: memória, labels, pc e acc vêm todos do PCB.
 public class InstructionExecutor {
 
-    private Memory memory;
-    private Map<String, Integer> labels;
+    public ExecutionResult execute(PCB pcb) throws ExecutionException {
 
-    public InstructionExecutor(
-            Memory memory,
-            Map<String, Integer> labels) {
+        List<Instruction> instructions = pcb.getProgram().getInstructions();
+        int pc = pcb.getPc();
 
-        this.memory = memory;
-        this.labels = labels;
-    }
+        // Programa sem SYSCALL 0 no fim, ou salto para fora
+        if (pc < 0 || pc >= instructions.size()) {
+            throw new ExecutionException(
+                "PC fora do programa: " + pc
+            );
+        }
 
-    public ExecutionResult execute(
-            Instruction instruction,
-            Process process) {
-
-        String operation = instruction.getOperation();
+        Instruction instruction = instructions.get(pc);
+        InstructionType type = instruction.getType();
         String operand = instruction.getOperand();
 
-        switch (operation) {
+        // Único lugar onde o pc avança. Os saltos, quando tomados,
+        // sobrescrevem este valor logo abaixo.
+        pcb.setPc(pc + 1);
 
-            case "LOAD":
-                executeLoad(operand, process);
+        switch (type) {
+
+            case LOAD:
+                pcb.setAcc(resolveOperand(operand, pcb));
                 return ExecutionResult.CONTINUE;
 
-            case "STORE":
-                executeStore(operand, process);
+            case STORE:
+                pcb.getMemory().set(operand, pcb.getAcc());
                 return ExecutionResult.CONTINUE;
 
-            case "ADD":
-                executeAdd(operand, process);
+            // Aritmética em int do Java: MULT (e ADD/SUB) pode estourar
+            // e "dar a volta" sem aviso, como numa CPU real de 32 bits.
+            case ADD:
+                pcb.setAcc(pcb.getAcc() + resolveOperand(operand, pcb));
                 return ExecutionResult.CONTINUE;
 
-            case "SUB":
-                executeSub(operand, process);
+            case SUB:
+                pcb.setAcc(pcb.getAcc() - resolveOperand(operand, pcb));
                 return ExecutionResult.CONTINUE;
 
-            case "MULT":
-                executeMult(operand, process);
+            case MULT:
+                pcb.setAcc(pcb.getAcc() * resolveOperand(operand, pcb));
                 return ExecutionResult.CONTINUE;
 
-            case "DIV":
-                executeDiv(operand, process);
+            // Divisão inteira: trunca em direção a zero (-7 / 2 = -3).
+            case DIV:
+                int divisor = resolveOperand(operand, pcb);
+
+                if (divisor == 0) {
+                    throw new ExecutionException("divisão por zero");
+                }
+
+                pcb.setAcc(pcb.getAcc() / divisor);
                 return ExecutionResult.CONTINUE;
 
-            case "BRANY":
-                executeBrany(operand, process);
+            case BRANY:
+                jump(operand, pcb);
                 return ExecutionResult.CONTINUE;
 
-            case "BRPOS":
-                executeBrpos(operand, process);
+            case BRPOS:
+                if (pcb.getAcc() > 0) {
+                    jump(operand, pcb);
+                }
                 return ExecutionResult.CONTINUE;
 
-            case "BRZERO":
-                executeBrzero(operand, process);
+            case BRZERO:
+                if (pcb.getAcc() == 0) {
+                    jump(operand, pcb);
+                }
                 return ExecutionResult.CONTINUE;
 
-            case "BRNEG":
-                executeBrneg(operand, process);
+            case BRNEG:
+                if (pcb.getAcc() < 0) {
+                    jump(operand, pcb);
+                }
                 return ExecutionResult.CONTINUE;
 
-            case "SYSCALL":
-                return executeSyscall(operand);
-
-            default:
-                throw new IllegalArgumentException(
-                    "Instrução desconhecida: " + operation
-                );
-        }
-    }
-
-    private void executeLoad(
-            String operand,
-            Process process) {
-
-        int value = resolveOperand(operand);
-
-        process.setAcc(value);
-
-        process.setPc(process.getPc() + 1);
-    }
-
-    private void executeStore(
-            String operand,
-            Process process) {
-
-        memory.set(
-            operand,
-            process.getAcc()
-        );
-
-        process.setPc(process.getPc() + 1);
-    }
-
-    private void executeAdd(
-            String operand,
-            Process process) {
-
-        int value = resolveOperand(operand);
-
-        process.setAcc(
-            process.getAcc() + value
-        );
-
-        process.setPc(process.getPc() + 1);
-    }
-
-    private void executeSub(
-            String operand,
-            Process process) {
-
-        int value = resolveOperand(operand);
-
-        process.setAcc(
-            process.getAcc() - value
-        );
-
-        process.setPc(process.getPc() + 1);
-    }
-
-    private void executeMult(
-            String operand,
-            Process process) {
-
-        int value = resolveOperand(operand);
-
-        process.setAcc(
-            process.getAcc() * value
-        );
-
-        process.setPc(process.getPc() + 1);
-    }
-
-    private void executeDiv(
-            String operand,
-            Process process) {
-
-        int value = resolveOperand(operand);
-
-        if (value == 0) {
-            throw new ArithmeticException(
-                "Divisão por zero"
-            );
-        }
-
-        process.setAcc(
-            process.getAcc() / value
-        );
-
-        process.setPc(process.getPc() + 1);
-    }
-
-    private void executeBrany(
-            String operand,
-            Process process) {
-
-        process.setPc(
-            getLabelPosition(operand)
-        );
-    }
-
-    private void executeBrpos(
-            String operand,
-            Process process) {
-
-        if (process.getAcc() > 0) {
-
-            process.setPc(
-                getLabelPosition(operand)
-            );
-
-        } else {
-
-            process.setPc(
-                process.getPc() + 1
-            );
-        }
-    }
-
-    private void executeBrzero(
-            String operand,
-            Process process) {
-
-        if (process.getAcc() == 0) {
-
-            process.setPc(
-                getLabelPosition(operand)
-            );
-
-        } else {
-
-            process.setPc(
-                process.getPc() + 1
-            );
-        }
-    }
-
-    private void executeBrneg(
-            String operand,
-            Process process) {
-
-        if (process.getAcc() < 0) {
-
-            process.setPc(
-                getLabelPosition(operand)
-            );
-
-        } else {
-
-            process.setPc(
-                process.getPc() + 1
-            );
-        }
-    }
-
-    private ExecutionResult executeSyscall(
-            String operand) {
-
-        int syscall = Integer.parseInt(operand);
-
-        switch (syscall) {
-
-            case 0:
-                return ExecutionResult.SYSCALL_HALT;
-
-            case 1:
-                return ExecutionResult.SYSCALL_PRINT;
-
-            case 2:
+            // O parser garante que o operando é 0, 1 ou 2
+            case SYSCALL:
+                if (operand.equals("0")) {
+                    return ExecutionResult.SYSCALL_HALT;
+                }
+                if (operand.equals("1")) {
+                    return ExecutionResult.SYSCALL_PRINT;
+                }
                 return ExecutionResult.SYSCALL_READ;
 
             default:
-                throw new IllegalArgumentException(
-                    "SYSCALL inválido: " + syscall
+                throw new ExecutionException(
+                    "instrução não suportada: " + type
                 );
         }
     }
 
-    private int resolveOperand(String operand) {
+    private int resolveOperand(String operand, PCB pcb) {
 
         // Modo imediato
         // Exemplo: #5
         if (operand.startsWith("#")) {
-
-            return Integer.parseInt(
-                operand.substring(1)
-            );
+            return Integer.parseInt(operand.substring(1));
         }
 
         // Modo direto
         // Exemplo: valor
-        return memory.get(operand);
+        return pcb.getMemory().get(operand);
     }
 
-    private int getLabelPosition(String label) {
-
-        if (!labels.containsKey(label)) {
-
-            throw new IllegalArgumentException(
-                "Label não encontrada: " + label
-            );
-        }
-
-        return labels.get(label);
+    // O parser garante que o label existe
+    private void jump(String label, PCB pcb) {
+        pcb.setPc(pcb.getProgram().getLabels().get(label));
     }
 }
