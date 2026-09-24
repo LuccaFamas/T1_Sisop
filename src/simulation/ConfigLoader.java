@@ -23,6 +23,9 @@ import process.PriorityGroupQueue;
 // (os scripts build.bat/build.sh entram na raiz do projeto).
 public class ConfigLoader {
 
+    // BOM do UTF-8 (EF BB BF) lido como ISO-8859-1
+    private static final String UTF8_BOM_AS_LATIN1 = "ï»¿";
+
     public List<PCB> load(Path configPath) throws ConfigException {
 
         List<String> lines;
@@ -42,7 +45,14 @@ public class ConfigLoader {
         for (int i = 0; i < lines.size(); i++) {
 
             int lineNumber = i + 1;
-            String line = lines.get(i).trim();
+            String line = lines.get(i);
+
+            // Bloco de Notas pode salvar "UTF-8 com BOM"
+            if (i == 0 && line.startsWith(UTF8_BOM_AS_LATIN1)) {
+                line = line.substring(UTF8_BOM_AS_LATIN1.length());
+            }
+
+            line = line.trim();
 
             if (line.isEmpty() || line.startsWith("#")) {
                 continue;

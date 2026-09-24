@@ -92,7 +92,7 @@ public class Scheduler {
         List<String> preEvents = new ArrayList<>();
 
         // 1. Desbloqueio: final da Fila 0 (antes das chegadas novas)
-        for (PCB pcb : new ArrayList<>(processes)) {
+        for (PCB pcb : processes) {
 
             if (pcb.getState() == ProcessState.BLOCKED
                     && pcb.getBlockedUntil() == time) {

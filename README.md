@@ -212,3 +212,7 @@ Os valores impressos (15, 2, 1, 0) coincidem com os do simulador.
 
 O resultado esperado de `caso1.txt` e `caso2.txt`, calculado à mão, está
 nos comentários de cada arquivo.
+
+Em `programas/` também estão `figura1.asm` (exemplo de formato do
+enunciado) e `erro1.asm` (erro proposital: salto para um label que não
+existe, detectado na linha 6).
