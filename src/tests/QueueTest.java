@@ -1,6 +1,7 @@
 package tests;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import assembly.AssemblyParseException;
@@ -18,7 +19,7 @@ public class QueueTest {
 
         // O programa não importa aqui; só nome e prioridade
         Program program = new AssemblyParser().parse(
-            List.of(".code", "SYSCALL 0", ".endcode"), "vazio");
+            Arrays.asList(".code", "SYSCALL 0", ".endcode"), "vazio");
 
         PCB a = new PCB("A", 0, 3, program);
         PCB b = new PCB("B", 0, 5, program);

@@ -1,0 +1,16 @@
+# Caso 1 (instruções). Rodar com a entrada redirecionada:
+#   build.bat configs\caso1.txt < configs\caso1_entrada.txt
+#   ./build.sh configs/caso1.txt < configs/caso1_entrada.txt
+# (ou sem o "<" e digitar -7 quando pedir)
+#
+# Esperado (calculado à mão antes de rodar):
+#   t=0  SYSCALL 2 lê -7, bloqueia até 4     t=4-5   STORE, BRNEG salta -> Fila 1
+#   t=6  MULT #-3 -> 21                      t=7     DIV #-2 -> -10
+#   t=8  imprime -10, bloqueia até 12        t=12-13 LOAD n, DIV #2 -> -3 -> Fila 1
+#   t=14 imprime -3, bloqueia até 18         t=18-25 laço: acc -2, -1, 0; BRZERO salta em t=25
+#   t=26 imprime 0, bloqueia até 30          t=30    SYSCALL 0, término 31
+#   TA 31 · CPU 19 · I/O 12 · espera 0
+#   Log: Lido -7; Impressão -10; Impressão -3; Impressão 0; Finalizado
+#
+# nome  chegada  prioridade  programa
+P01     0        1           programas/caso1.asm

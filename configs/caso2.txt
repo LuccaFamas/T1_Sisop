@@ -1,0 +1,25 @@
+# Caso 2 (escalonamento). P01 e P02 têm a mesma prioridade (2).
+# P03 (prioridade 4) volta de I/O e preempta quem está na Fila 1.
+#
+# Esperado (calculado à mão antes de rodar):
+#   t  : 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17  18  19
+#   CPU: P01 P01 P02 P02 P03 P01 P01 P01 P03 P03 P01 P02 P02 P03 P02 P02 P01 P01 P02 P02
+#
+#   t=1,3  P01 e P02 rebaixados, nessa ordem: Fila 1 = P01(2),P02(2)
+#   t=5    desempate FIFO: P01 sai antes de P02 (mesma prioridade)
+#   t=8    P03 volta do I/O e preempta P01 com 1 UT de quantum sobrando:
+#          P01 vai ao TOPO do grupo -> Fila 1 = P01(2),P02(2)
+#   t=10   P01 usa a 1 UT restante e vai ao final do grupo -> Fila 1 = P02(2),P01(2)
+#   t=13   P03 volta do I/O e preempta P02 com 2 UTs sobrando: topo do grupo
+#   t=14-15 P02 usa as 2 UTs restantes
+#
+#   P01: término 18 · TA 18 · CPU 8 · I/O 0 · espera 10
+#   P02: término 20 · TA 20 · CPU 8 · I/O 0 · espera 12
+#   P03: término 14 · TA 14 · CPU 4 · I/O 6 · espera 4
+#   Médias: turnaround 17,33 · espera 8,67
+#   Log: [P03] 0; [P03] 5; [P03] Finalizado; [P01] Finalizado; [P02] Finalizado
+#
+# nome  chegada  prioridade  programa
+P01     0        2           programas/caso2_calculo.asm
+P02     0        2           programas/caso2_calculo.asm
+P03     0        4           programas/caso2_io.asm
