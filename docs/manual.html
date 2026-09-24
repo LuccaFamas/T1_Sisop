@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Manual — Simulador MLFQ</title>
+<style>
+  @page { size: A4; margin: 22mm 20mm 22mm 20mm; }
+  :root { --dark: #1B2430; --text: #2B3440; --muted: #5A6472; --accent: #B04A22; --teal: #226E6E; --rule: #D9D5CB; --soft: #F4F2EC; }
+  body { font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: var(--text); margin: 0; }
+  h1, h2, h3 { color: var(--dark); line-height: 1.2; }
+  h2 { font-size: 16pt; margin: 0 0 10pt; padding-bottom: 4pt; border-bottom: 2px solid var(--accent); break-after: avoid; }
+  h3 { font-size: 12pt; margin: 16pt 0 6pt; break-after: avoid; }
+  p { margin: 0 0 8pt; }
+  section { break-before: page; }
+  section.cont { break-before: auto; margin-top: 22pt; }
+  code, pre, .mono { font-family: Consolas, "Courier New", monospace; }
+  code { font-size: 9.5pt; background: var(--soft); padding: 0 3pt; border-radius: 3px; }
+  pre { font-size: 8.8pt; line-height: 1.35; background: var(--soft); border: 1px solid var(--rule); border-radius: 6px; padding: 8pt 10pt; white-space: pre; overflow: hidden; break-inside: avoid; margin: 0 0 10pt; }
+  pre.dark { background: var(--dark); color: #F6F5F1; border-color: var(--dark); }
+  table { width: 100%; border-collapse: collapse; margin: 0 0 10pt; font-size: 9.8pt; break-inside: avoid; }
+  th { text-align: left; color: var(--dark); border-bottom: 1.5px solid var(--dark); padding: 4pt 6pt; }
+  td { border-bottom: 1px solid var(--rule); padding: 4pt 6pt; vertical-align: top; }
+  ul, ol { margin: 0 0 8pt; padding-left: 18pt; }
+  li { margin-bottom: 3pt; }
+  .note { border-left: 4px solid var(--teal); background: #EEF4F3; padding: 6pt 10pt; margin: 0 0 10pt; break-inside: avoid; }
+  .warn { border-left: 4px solid var(--accent); background: #F8EEE9; padding: 6pt 10pt; margin: 0 0 10pt; break-inside: avoid; }
+
+  /* Capa */
+  .cover { height: 250mm; display: flex; flex-direction: column; justify-content: space-between; }
+  .cover .eyebrow { font-size: 10pt; letter-spacing: 2pt; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .cover h1 { font-size: 34pt; margin: 8pt 0 10pt; }
+  .cover .sub { font-size: 14pt; color: var(--muted); }
+  .cover .strip { display: flex; gap: 3pt; margin-bottom: 16pt; }
+  .cover .strip span { width: 26pt; height: 9pt; border-radius: 2pt; }
+  .cover .who { font-size: 11pt; color: var(--text); line-height: 1.7; }
+
+  /* Sumário */
+  .toc { list-style: none; padding: 0; font-size: 11pt; }
+  .toc li { padding: 5pt 0; border-bottom: 1px dotted var(--rule); }
+  .toc b { display: inline-block; width: 22pt; color: var(--accent); }
+
+  /* Gantt */
+  .gantt { display: flex; gap: 1.5pt; margin: 4pt 0 2pt; break-inside: avoid; }
+  .gantt div { flex: 1; text-align: center; font-size: 7.5pt; }
+  .gantt .c { height: 16pt; line-height: 16pt; border-radius: 2pt; color: #F6F5F1; font-weight: 600; }
+  .gantt .p1 { background: var(--accent); }
+  .gantt .p2 { background: var(--teal); }
+  .gantt .idle { background: #E1DED6; color: var(--muted); }
+  .gantt .t { color: var(--muted); font-family: Consolas, monospace; }
+</style>
+</head>
+<body>
+
+<!-- ====================== CAPA ====================== -->
+<div class="cover">
+  <div>
+    <div class="eyebrow">Sistemas Operacionais · Trabalho 1</div>
+    <h1>Simulador de Execução Dinâmica de Processos com MLFQ</h1>
+    <div class="sub">Manual do usuário e documentação técnica</div>
+  </div>
+  <div>
+    <div class="strip">
+      <span style="background:#B04A22"></span><span style="background:#B04A22"></span>
+      <span style="background:#226E6E"></span><span style="background:#226E6E"></span>
+      <span style="background:#226E6E"></span><span style="background:#226E6E"></span>
+      <span style="background:#B04A22"></span><span style="background:#B04A22"></span>
+      <span style="background:#E1DED6"></span><span style="background:#226E6E"></span>
+      <span style="background:#226E6E"></span><span style="background:#B04A22"></span>
+    </div>
+    <div class="who">
+      <b>Integrantes:</b> [Nomes do grupo]<br>
+      <b>Professor:</b> [Nome do professor]<br>
+      <b>Data:</b> [Data da entrega]<br>
+      <b>Repositório:</b> github.com/LuccaFamas/T1_Sisop
+    </div>
+  </div>
+</div>
+
+<!-- ====================== SUMÁRIO ====================== -->
+<section>
+  <h2>Sumário</h2>
+  <ol class="toc">
+    <li><b>1</b>Visão geral</li>
+    <li><b>2</b>Requisitos e compilação</li>
+    <li><b>3</b>Como executar</li>
+    <li><b>4</b>Arquivo de configuração</li>
+    <li><b>5</b>Formato dos programas</li>
+    <li><b>6</b>Regras de escalonamento</li>
+    <li><b>7</b>Como ler a saída</li>
+    <li><b>8</b>Decisões de interpretação</li>
+    <li><b>9</b>Exemplo do enunciado e divergência com o gabarito do PDF</li>
+    <li><b>10</b>Arquitetura do código</li>
+    <li><b>11</b>Testes e validação</li>
+    <li><b>12</b>Limitações conhecidas</li>
+  </ol>
+</section>
+
+<!-- ====================== 1 ====================== -->
+<section>
+  <h2>1. Visão geral</h2>
+  <p>O simulador reproduz uma máquina baseada em acumulador que executa vários programas ao mesmo tempo, escalonados por um <b>MLFQ</b> (Multilevel Feedback Queue) de duas filas. O tempo avança em <b>ticks</b>: cada tick é uma unidade de tempo (UT), e em cada tick no máximo uma instrução é executada.</p>
+  <p>O simulador faz três coisas:</p>
+  <ol>
+    <li><b>Lê programas</b> escritos em um assembly simplificado (arquivos <code>.asm</code>). Erros de sintaxe são detectados na leitura, antes de qualquer execução, com o arquivo e a linha.</li>
+    <li><b>Executa as instruções</b>, uma por UT. Cada processo tem seu próprio acumulador, contador de programa e memória; dois processos que rodam o mesmo programa não interferem um no outro.</li>
+    <li><b>Escalona os processos</b> entre a CPU, as duas filas de prontos e a lista de bloqueados, e ao final mostra o diagrama de Gantt e as estatísticas de turnaround e espera.</li>
+  </ol>
+  <p>A entrada é um <b>arquivo de configuração</b> que lista os processos (nome, instante de chegada, prioridade e programa). A saída mostra, a cada UT, o estado de cada processo, o conteúdo das filas e dos bloqueados, e as mensagens dos programas.</p>
+
+  <h3>Estrutura de pastas</h3>
+<pre>T1_Sisop/
+  build.bat, build.sh     compilam do zero e executam
+  src/                    código-fonte Java
+  programas/              programas .asm
+  configs/                arquivos de configuração
+  docs/manual.html        fonte deste manual
+  README.md               resumo do projeto</pre>
+</section>
+
+<!-- ====================== 2 ====================== -->
+<section>
+  <h2>2. Requisitos e compilação</h2>
+  <ul>
+    <li><b>Java (JDK) 8 ou superior.</b> Testado com JDK 8, 21 e 23. Não há bibliotecas externas nem ferramentas de build (Maven/Gradle).</li>
+    <li><b>Windows</b> (cmd ou PowerShell) ou <b>Linux</b>.</li>
+  </ul>
+  <p>Para conferir se o JDK está instalado: <code>javac -version</code>.</p>
+
+  <h3>Compilar pelo script (recomendado)</h3>
+  <p>Os scripts apagam a pasta <code>bin/</code>, compilam todo o projeto do zero e já executam a simulação com os argumentos recebidos.</p>
+  <table>
+    <tr><th style="width:26%">Terminal</th><th>Comando</th></tr>
+    <tr><td>cmd (Windows)</td><td><code>build.bat configs\cenario_c.txt</code></td></tr>
+    <tr><td>PowerShell (Windows)</td><td><code>.\build.bat configs\cenario_c.txt</code></td></tr>
+    <tr><td>Linux</td><td><code>./build.sh configs/cenario_c.txt</code></td></tr>
+  </table>
+  <p>Os comandos devem ser executados <b>na pasta do projeto</b>. No Windows, uma forma prática é abrir a pasta no Explorador de Arquivos, digitar <code>powershell</code> na barra de endereço e pressionar Enter.</p>
+
+  <h3>Compilar manualmente</h3>
+  <p>Na pasta do projeto, compile <b>todos</b> os arquivos de uma vez:</p>
+<pre>javac -encoding UTF-8 -d bin src/*.java src/*/*.java
+java -cp bin Main configs/cenario_c.txt</pre>
+  <div class="warn"><b>Atenção:</b> compilar um arquivo isolado (por exemplo, <code>javac src/simulation/Scheduler.java</code>) falha com <i>"package assembly does not exist"</i>, porque o compilador não encontra as classes dos outros pacotes. Use o script ou o comando acima.</div>
+  <div class="note">Os scripts configuram a saída em UTF-8 para os acentos aparecerem corretamente. No Windows, <code>build.bat</code> executa <code>chcp 65001</code>, o que muda a codificação daquela janela do terminal até ela ser fechada.</div>
+</section>
+
+<!-- ====================== 3 ====================== -->
+<section>
+  <h2>3. Como executar</h2>
+  <p>Formato geral: <code>build.bat [configuração] [modo]</code>. Sem argumentos, usa <code>configs/cenario_c.txt</code> no modo tabela.</p>
+
+  <h3>Modos de exibição</h3>
+  <table>
+    <tr><th style="width:24%">Segundo argumento</th><th>Comportamento</th></tr>
+    <tr><td><i>(nenhum)</i></td><td><b>Modo tabela.</b> Imprime uma linha por tick, depois o Gantt e as estatísticas.</td></tr>
+    <tr><td><code>passo</code></td><td><b>Modo apresentação.</b> Limpa a tela e mostra um tick por vez; avança a cada Enter.</td></tr>
+    <tr><td>um número, ex. <code>800</code></td><td><b>Modo apresentação automático.</b> Avança sozinho a cada 800 ms.</td></tr>
+  </table>
+  <p>Os modos só mudam a exibição: a simulação e os resultados são sempre os mesmos.</p>
+<pre>.\build.bat configs\cenario_c.txt           (tabela)
+.\build.bat configs\cenario_c.txt passo     (um tick por Enter)
+.\build.bat configs\cenario_c.txt 800       (automático, 0,8 s por tick)</pre>
+  <div class="note">O modo apresentação precisa de uma janela de terminal interativa (cmd, PowerShell, terminal do Linux ou terminal integrado do VS Code). Pelo botão "Run" de uma IDE, que não passa argumentos, o programa roda no modo tabela.</div>
+
+  <h3>Configurações incluídas</h3>
+  <table>
+    <tr><th style="width:30%">Arquivo</th><th>Conteúdo</th></tr>
+    <tr><td><code>configs/cenario_a.txt</code></td><td>P01 sozinho (teste1.asm)</td></tr>
+    <tr><td><code>configs/cenario_b.txt</code></td><td>P02 sozinho (teste2.asm)</td></tr>
+    <tr><td><code>configs/cenario_c.txt</code></td><td>Exemplo do enunciado: P01 e P02 juntos</td></tr>
+    <tr><td><code>configs/caso1.txt</code></td><td>Caso de teste de instruções; pede um número pelo teclado (use <code>-7</code>)</td></tr>
+    <tr><td><code>configs/caso2.txt</code></td><td>Caso de teste de escalonamento com três processos</td></tr>
+  </table>
+
+  <h3>Entrada pelo teclado (SYSCALL 2)</h3>
+  <p>Quando um programa executa <code>SYSCALL 2</code>, o simulador pede um inteiro e repete o pedido até receber um valor válido. Para testes reproduzíveis, a entrada pode vir de um arquivo (no cmd ou no Linux):</p>
+<pre>build.bat configs\caso1.txt &lt; configs\caso1_entrada.txt
+./build.sh configs/caso1.txt &lt; configs/caso1_entrada.txt</pre>
+  <p>Se a entrada terminar durante uma <code>SYSCALL 2</code>, o processo é encerrado com erro e a simulação continua.</p>
+</section>
+
+<!-- ====================== 4 ====================== -->
+<section>
+  <h2>4. Arquivo de configuração</h2>
+  <p>Um processo por linha, com quatro campos separados por espaços: <code>nome chegada prioridade caminho.asm</code>. Linhas vazias e linhas iniciadas por <code>#</code> são ignoradas.</p>
+<pre># nome  chegada  prioridade  programa
+P01     0        3           programas/teste1.asm
+P02     1        5           programas/teste2.asm</pre>
+  <table>
+    <tr><th style="width:18%">Campo</th><th>Regra</th></tr>
+    <tr><td>nome</td><td>Identifica o processo nas mensagens e na saída. Não pode se repetir.</td></tr>
+    <tr><td>chegada</td><td>Inteiro ≥ 0: tick em que o processo entra no sistema.</td></tr>
+    <tr><td>prioridade</td><td>Inteiro de 1 a 5; maior = mais prioritário (usada na Fila 1).</td></tr>
+    <tr><td>caminho</td><td>Caminho do <code>.asm</code>, relativo à pasta do projeto. Pode conter espaços.</td></tr>
+  </table>
+  <div class="note"><b>Convenção de nomes:</b> use nomes com o mesmo número de dígitos (<code>P01</code>, <code>P02</code>, …, <code>P10</code>). Empates são resolvidos por ordem alfabética de nome, e com o mesmo número de dígitos ela coincide com a numérica (senão <code>P10</code> viria antes de <code>P2</code>).</div>
+  <p>Qualquer erro na configuração ou nos programas impede o início da simulação e é informado com o arquivo e a linha. Exemplo:</p>
+<pre>Erro na configuração: e6.txt, linha 1: erro no programa de P01 -> erro1.asm, linha 6: label não definido: inicoi</pre>
+  <p>São detectados: formato inválido, nome repetido, chegada negativa ou não numérica, prioridade fora de 1–5, arquivo inexistente e qualquer erro de sintaxe no programa (seção 5).</p>
+</section>
+
+<!-- ====================== 5 ====================== -->
+<section>
+  <h2>5. Formato dos programas</h2>
+  <p>Um programa tem uma seção de código (<code>.code</code> … <code>.endcode</code>) e, opcionalmente, uma seção de dados (<code>.data</code> … <code>.enddata</code>), com uma variável por linha no formato <code>nome valor</code>.</p>
+<pre class="dark">.code
+        LOAD limite
+loop:   SUB #1          # acc = acc - 1
+        STORE temp
+        SYSCALL 1       # imprime acc e bloqueia 3 UTs
+        LOAD temp
+        BRPOS loop
+        SYSCALL 0       # fim
+.endcode
+.data
+        limite 3
+        temp 0
+.enddata</pre>
+
+  <h3>Instruções</h3>
+  <table>
+    <tr><th style="width:22%">Instrução</th><th style="width:40%">Efeito</th><th>Operando</th></tr>
+    <tr><td><code>ADD op</code></td><td>acc = acc + op</td><td>imediato <code>#n</code> ou variável</td></tr>
+    <tr><td><code>SUB op</code></td><td>acc = acc − op</td><td>imediato ou variável</td></tr>
+    <tr><td><code>MULT op</code></td><td>acc = acc × op</td><td>imediato ou variável</td></tr>
+    <tr><td><code>DIV op</code></td><td>acc = acc ÷ op (divisão inteira)</td><td>imediato ou variável</td></tr>
+    <tr><td><code>LOAD op</code></td><td>acc = op</td><td>imediato ou variável</td></tr>
+    <tr><td><code>STORE op</code></td><td>op = acc</td><td>somente variável</td></tr>
+    <tr><td><code>BRANY label</code></td><td>salta para o label</td><td>label</td></tr>
+    <tr><td><code>BRPOS label</code></td><td>salta se acc &gt; 0</td><td>label</td></tr>
+    <tr><td><code>BRZERO label</code></td><td>salta se acc = 0</td><td>label</td></tr>
+    <tr><td><code>BRNEG label</code></td><td>salta se acc &lt; 0</td><td>label</td></tr>
+    <tr><td><code>SYSCALL n</code></td><td>0 = termina; 1 = imprime acc; 2 = lê um inteiro para acc</td><td>0, 1 ou 2</td></tr>
+  </table>
+  <p>Cada instrução custa 1 UT. <code>SYSCALL 1</code> e <code>SYSCALL 2</code> também bloqueiam o processo por 3 UTs (seção 6).</p>
+
+  <h3>Regras de escrita</h3>
+  <ul>
+    <li>O label pode ficar sozinho na linha (<code>loop:</code>) ou antes da instrução (<code>ponto1: SUB #1</code>).</li>
+    <li><code>#</code> colado a um número (<code>#5</code>, <code>#-3</code>) é um valor imediato. <code>#</code> seguido de espaço ou do fim da linha começa um comentário.</li>
+    <li>Instruções, variáveis e labels não diferenciam maiúsculas de minúsculas (<code>Variable</code> e <code>variable</code> são a mesma variável).</li>
+    <li>Nomes de variáveis e labels: letras sem acento, dígitos e <code>_</code>, começando por letra ou <code>_</code>.</li>
+    <li>Valores de dados e imediatos podem ser negativos.</li>
+  </ul>
+
+  <h3>Erros detectados na leitura</h3>
+  <p>Instrução desconhecida; operando ausente ou inválido; <code>STORE</code> com imediato; <code>SYSCALL</code> diferente de 0, 1 e 2; label ou variável não declarados; label ou variável duplicados; label no fim do código sem instrução depois; conteúdo fora das seções; seção não fechada; programa sem instruções. Exemplo:</p>
+<pre>erro1.asm, linha 6: label não definido: inicoi</pre>
+</section>
+
+<!-- ====================== 6 ====================== -->
+<section>
+  <h2>6. Regras de escalonamento</h2>
+  <table>
+    <tr><th style="width:50%">Fila 0 — quantum 2</th><th>Fila 1 — quantum 4</th></tr>
+    <tr><td>Round Robin FIFO.</td><td>Round Robin por prioridade estática, de 5 a 1.</td></tr>
+    <tr><td>Recebe todo processo novo e todo processo que volta de I/O.</td><td>Mesma prioridade: ordem de chegada (FIFO).</td></tr>
+    <tr><td>Tem sempre a vez antes da Fila 1.</td><td>Só usa a CPU quando a Fila 0 está vazia.</td></tr>
+  </table>
+
+  <h3>Transições</h3>
+  <table>
+    <tr><th style="width:40%">Situação</th><th>O que acontece</th></tr>
+    <tr><td>Esgotou o quantum na Fila 0</td><td>É rebaixado para o final do seu grupo de prioridade na Fila 1, com quantum 4.</td></tr>
+    <tr><td>Esgotou o quantum na Fila 1</td><td>Volta para o final do seu grupo de prioridade, com quantum 4.</td></tr>
+    <tr><td>Alguém entrou na Fila 0 enquanto um processo da Fila 1 executava</td><td>O processo da Fila 1 é interrompido imediatamente e volta ao <b>topo</b> do seu grupo, mantendo o quantum que restava.</td></tr>
+    <tr><td><code>SYSCALL 1</code> ou <code>2</code></td><td>Bloqueado por 3 UTs; depois volta ao final da Fila 0, com quantum 2.</td></tr>
+    <tr><td><code>SYSCALL 0</code> ou erro de execução</td><td>Finalizado.</td></tr>
+  </table>
+  <p>Um processo retomado continua do ponto em que parou. A troca de contexto custa 0 UT.</p>
+
+  <h3>Ordem dos eventos em cada tick t</h3>
+  <ol>
+    <li><b>Desbloqueio:</b> quem volta de I/O em t entra no final da Fila 0.</li>
+    <li><b>Admissão:</b> quem chega em t entra no final da Fila 0.</li>
+    <li><b>Preempção:</b> se quem está na CPU é da Fila 1 e a Fila 0 não está vazia, ele volta ao topo do seu grupo.</li>
+    <li><b>Dispatch:</b> se a CPU está livre, pega o primeiro da Fila 0; senão, o primeiro da Fila 1; senão, o tick fica ocioso.</li>
+    <li><b>Registro</b> do estado para o monitor.</li>
+    <li><b>Execução</b> de uma instrução; contagem de CPU, espera e I/O.</li>
+    <li><b>Pós-execução</b>, nesta ordem de precedência: fim do processo → bloqueio por I/O → fim do quantum.</li>
+  </ol>
+  <p>Essa ordem fixa torna a simulação determinística: a mesma configuração produz sempre a mesma saída.</p>
+</section>
+
+<!-- ====================== 7 ====================== -->
+<section>
+  <h2>7. Como ler a saída</h2>
+  <p>Saída real do modo tabela para <code>configs/cenario_a.txt</code>:</p>
+<pre>t    CPU  Instrução               P01         Fila 0  Fila 1  Bloqueados  Evento
+--------------------------------------------------------------------------------
+0    P01  LOAD valor (acc=10)     Executando  -       -       -
+1    P01  ADD #5 (acc=15)         Executando  -       -       -           quantum -> Fila 1
+2    P01  STORE valor (acc=15)    Executando  -       -       -
+[P01] Impressão (SYSCALL 1): 15
+3    P01  SYSCALL 1 (acc=15)      Executando  -       -       -           imprime 15
+4    --   -                       Bloqueado   -       -       P01->7
+5    --   -                       Bloqueado   -       -       P01->7
+6    --   -                       Bloqueado   -       -       P01->7
+[P01] Finalizado (SYSCALL 0)
+7    P01  SYSCALL 0 (acc=15)      Executando  -       -       -           halt, término 8
+
+Diagrama de Gantt (-- = CPU ociosa):
+  t  : 0   1   2   3   4   5   6   7
+  CPU: P01 P01 P01 P01 --  --  --  P01
+
+Estatísticas (em UTs):
+  Processo  Chegada  Término  Turnaround   CPU   I/O  Espera (direta)        TA-CPU-I/O
+  P01             0        8           8     5     3                0                 0
+
+Turnaround médio: 8,00   Tempo médio de espera (fila de prontos): 0,00</pre>
+  <table>
+    <tr><th style="width:24%">Coluna</th><th>Significado</th></tr>
+    <tr><td>t</td><td>Número do tick.</td></tr>
+    <tr><td>CPU / Instrução</td><td>Processo que executou no tick, a instrução e o valor de acc depois dela. <code>--</code> = CPU ociosa.</td></tr>
+    <tr><td>Uma coluna por processo</td><td>Estado durante o tick: Pronto, Executando, Bloqueado, Finalizado, ou <code>-</code> se ainda não chegou.</td></tr>
+    <tr><td>Fila 0 / Fila 1</td><td>Processos prontos em cada fila, na ordem em que sairão. Na Fila 1, <code>nome(prioridade)</code>.</td></tr>
+    <tr><td>Bloqueados</td><td><code>nome-&gt;t</code>: o tick em que o processo volta a ficar pronto.</td></tr>
+    <tr><td>Evento</td><td>O que aconteceu ao fim do tick: rebaixamento, preempção, impressão, leitura, término.</td></tr>
+  </table>
+  <p>As filas e os estados são o retrato do tick <b>depois</b> da escolha de quem executa e <b>antes</b> do evento da última coluna. O processo que está na CPU não aparece nas filas. As mensagens dos programas (<code>[P01] Impressão (SYSCALL 1): 15</code>) aparecem logo antes da linha do tick em que ocorreram.</p>
+  <p>Nas estatísticas, a espera é contada diretamente (ticks em que o processo esteve pronto) e conferida pela conta turnaround − CPU − I/O. Se as duas divergirem, a linha mostra um aviso.</p>
+</section>
+
+<!-- ====================== 8 ====================== -->
+<section>
+  <h2>8. Decisões de interpretação</h2>
+  <p>Pontos que o enunciado não fixa e a convenção adotada em cada um:</p>
+  <table>
+    <tr><th style="width:28%">Situação</th><th>Decisão</th></tr>
+    <tr><td>Relógio</td><td>O tick t representa o intervalo [t, t+1); executa no máximo uma instrução.</td></tr>
+    <tr><td>Bloqueio de I/O</td><td>A SYSCALL executa em t (gasta 1 UT de CPU); o processo fica bloqueado em t+1, t+2 e t+3 e volta a pronto em t+4.</td></tr>
+    <tr><td>Impressão e leitura</td><td>Acontecem no tick em que a SYSCALL executa, não no desbloqueio.</td></tr>
+    <tr><td>Término</td><td>t+1, onde t é o tick do <code>SYSCALL 0</code>. Turnaround = término − chegada.</td></tr>
+    <tr><td>Espera</td><td>Ticks em que o processo esteve pronto, em qualquer fila, fora da CPU.</td></tr>
+    <tr><td>Empate no mesmo tick</td><td>Quem volta de I/O entra na Fila 0 antes de quem chega; entre iguais, ordem alfabética de nome.</td></tr>
+    <tr><td>Fila 0 × Fila 0</td><td>Uma chegada na Fila 0 não interrompe outro processo da Fila 0.</td></tr>
+    <tr><td>SYSCALL no último tick do quantum</td><td>O processo bloqueia e não é rebaixado: I/O tem precedência sobre o fim do quantum.</td></tr>
+    <tr><td>Erro de execução</td><td>Divisão por zero, PC fora do programa ou fim da entrada na <code>SYSCALL 2</code> encerram só aquele processo, com a mensagem <code>[Pxx] Erro de execução: …</code>. Ele é tratado como um término normal (a instrução conta 1 UT, término t+1, entra nas médias) e aparece marcado "(erro)".</td></tr>
+    <tr><td><code>STORE</code> em variável não declarada</td><td>Erro de sintaxe: toda variável deve estar em <code>.data</code>. O próprio <code>teste2.asm</code> do enunciado declara <code>temp 0</code> mesmo sem ler <code>temp</code> antes de gravá-la.</td></tr>
+    <tr><td>Aritmética</td><td>Inteiros de 32 bits. A divisão trunca em direção a zero (−7 ÷ 2 = −3). <code>MULT</code> pode estourar e "dar a volta".</td></tr>
+    <tr><td>Parada</td><td>Quando todos os processos terminam, ou no limite de segurança de 10.000 ticks (proteção contra laço infinito).</td></tr>
+    <tr><td>Figura 1 do enunciado</td><td>Declara <code>Variable</code> e usa <code>variable</code>; como os nomes não diferenciam maiúsculas, o programa funciona.</td></tr>
+  </table>
+</section>
+
+<!-- ====================== 9 ====================== -->
+<section>
+  <h2>9. Exemplo do enunciado e divergência com o gabarito do PDF</h2>
+  <p><code>configs/cenario_c.txt</code>: P01 (<code>teste1.asm</code>) chega em 0 com prioridade 3; P02 (<code>teste2.asm</code>) chega em 1 com prioridade 5. Diagrama de Gantt produzido pelo simulador (P1 = P01, P2 = P02):</p>
+  <div class="gantt">
+    <div><div class="c p1">P1</div><div class="t">0</div></div><div><div class="c p1">P1</div><div class="t">1</div></div>
+    <div><div class="c p2">P2</div><div class="t">2</div></div><div><div class="c p2">P2</div><div class="t">3</div></div>
+    <div><div class="c p2">P2</div><div class="t">4</div></div><div><div class="c p2">P2</div><div class="t">5</div></div>
+    <div><div class="c p1">P1</div><div class="t">6</div></div><div><div class="c p1">P1</div><div class="t">7</div></div>
+    <div><div class="c idle">--</div><div class="t">8</div></div><div><div class="c p2">P2</div><div class="t">9</div></div>
+    <div><div class="c p2">P2</div><div class="t">10</div></div><div><div class="c p1">P1</div><div class="t">11</div></div>
+    <div><div class="c p2">P2</div><div class="t">12</div></div><div><div class="c p2">P2</div><div class="t">13</div></div>
+    <div><div class="c p2">P2</div><div class="t">14</div></div><div><div class="c idle">--</div><div class="t">15</div></div>
+    <div><div class="c idle">--</div><div class="t">16</div></div><div><div class="c idle">--</div><div class="t">17</div></div>
+    <div><div class="c p2">P2</div><div class="t">18</div></div><div><div class="c p2">P2</div><div class="t">19</div></div>
+    <div><div class="c p2">P2</div><div class="t">20</div></div><div><div class="c p2">P2</div><div class="t">21</div></div>
+    <div><div class="c p2">P2</div><div class="t">22</div></div><div><div class="c idle">--</div><div class="t">23</div></div>
+    <div><div class="c idle">--</div><div class="t">24</div></div><div><div class="c idle">--</div><div class="t">25</div></div>
+    <div><div class="c p2">P2</div><div class="t">26</div></div><div><div class="c p2">P2</div><div class="t">27</div></div>
+    <div><div class="c p2">P2</div><div class="t">28</div></div>
+  </div>
+  <p style="margin-top:8pt">Momentos principais:</p>
+  <ul>
+    <li><b>t = 1:</b> P1 esgota o quantum 2 sem terminar e é rebaixado para a Fila 1.</li>
+    <li><b>t = 4:</b> P2 também está na Fila 1, mas executa antes de P1 por ter prioridade 5 contra 3.</li>
+    <li><b>t = 8:</b> os dois estão bloqueados por I/O; a CPU fica ociosa.</li>
+    <li><b>t = 11:</b> P1 volta do I/O pela Fila 0, passa na frente de P2 e termina.</li>
+  </ul>
+  <p>Saída dos programas, em ordem: <code>[P02] Impressão (SYSCALL 1): 2</code>, <code>[P01] Impressão (SYSCALL 1): 15</code>, <code>[P01] Finalizado (SYSCALL 0)</code>, <code>[P02] Impressão (SYSCALL 1): 1</code>, <code>[P02] Impressão (SYSCALL 1): 0</code>, <code>[P02] Finalizado (SYSCALL 0)</code>.</p>
+  <table>
+    <tr><th>Processo</th><th>Término</th><th>Turnaround</th><th>CPU</th><th>I/O</th><th>Espera</th></tr>
+    <tr><td>P01</td><td>12</td><td>12</td><td>5</td><td>3</td><td>4 (ticks 2, 3, 4, 5)</td></tr>
+    <tr><td>P02</td><td>29</td><td>28</td><td>17</td><td>9</td><td>2 (ticks 1, 11)</td></tr>
+  </table>
+  <p><b>Turnaround médio: 20 UTs. Tempo médio de espera: 3 UTs.</b></p>
+
+  <h3>Divergência com o gabarito do PDF</h3>
+  <p>Os números acima diferem do gabarito apresentado no PDF do enunciado, de propósito. O simulador segue as regras do enunciado, e o gabarito não é consistente com os próprios programas:</p>
+  <ul>
+    <li>O gabarito conta 4 UTs de CPU para P1 e 8 para P2, mas os programas executam <b>5</b> e <b>17</b> instruções, e cada instrução custa 1 UT.</li>
+    <li>Ele agrupa instruções no mesmo instante (STORE e SYSCALL 1 de P2 em t = 4) e pula o BRPOS em t = 8.</li>
+    <li>O log coloca <code>[P1] Finalizado</code> depois de <code>[P2] … 0</code>, contradizendo a própria linha do tempo.</li>
+  </ul>
+  <p>Os valores impressos pelos programas (15, 2, 1 e 0) coincidem com os do gabarito.</p>
+</section>
+
+<!-- ====================== 10 ====================== -->
+<section>
+  <h2>10. Arquitetura do código</h2>
+  <p>Java puro, organizado em quatro pacotes. O fluxo tem duas etapas: a <b>carga</b>, que acontece uma vez, e o <b>laço de ticks</b>.</p>
+<pre>Carga:        configs/*.txt -> ConfigLoader -> AssemblyParser -> Program -> PCB (um por processo)
+Cada tick:    Scheduler -> InstructionExecutor -> OperatingSystem -> Monitor / LivePanel</pre>
+  <table>
+    <tr><th style="width:30%">Classe</th><th>Responsabilidade</th></tr>
+    <tr><td><code>Main</code></td><td>Lê os argumentos, carrega a configuração e inicia a simulação.</td></tr>
+    <tr><td colspan="2"><b>assembly</b> — leitura dos programas</td></tr>
+    <tr><td><code>AssemblyParser</code></td><td>Lê o <code>.asm</code> com uma máquina de estados de seções e valida tudo, com o número da linha.</td></tr>
+    <tr><td><code>Program</code></td><td>Resultado imutável do parse: instruções, labels e valores iniciais dos dados. Pode ser compartilhado por vários processos.</td></tr>
+    <tr><td><code>Instruction</code>, <code>InstructionType</code></td><td>Uma instrução (tipo, operando, linha) e o enum dos mnemônicos.</td></tr>
+    <tr><td colspan="2"><b>cpu</b> — execução</td></tr>
+    <tr><td><code>InstructionExecutor</code></td><td>Executa uma instrução de um PCB. Não guarda estado; é o único ponto que avança o pc.</td></tr>
+    <tr><td><code>Memory</code></td><td>Memória de dados de um processo (cópia dos valores iniciais do programa).</td></tr>
+    <tr><td><code>ExecutionResult</code>, <code>ExecutionException</code></td><td>O que fazer após a instrução (continuar, syscall) e os erros de execução.</td></tr>
+    <tr><td colspan="2"><b>process</b> — processos e Fila 1</td></tr>
+    <tr><td><code>PCB</code></td><td>Contexto do processo: pc, acc, memória, estado, fila, quantum restante e contadores.</td></tr>
+    <tr><td><code>PriorityGroupQueue</code></td><td>Fila 1: uma fila FIFO por prioridade, com inserção no final ou no topo do grupo.</td></tr>
+    <tr><td colspan="2"><b>simulation</b> — escalonamento e saída</td></tr>
+    <tr><td><code>Scheduler</code></td><td>Relógio e os 7 passos de cada tick (seção 6).</td></tr>
+    <tr><td><code>OperatingSystem</code></td><td>Trata as syscalls (imprimir, ler, bloquear, encerrar) e os erros de execução.</td></tr>
+    <tr><td><code>Monitor</code>, <code>TickSnapshot</code></td><td>Tabela por tick, Gantt e estatísticas; o registro de cada tick.</td></tr>
+    <tr><td><code>LivePanel</code></td><td>Modo apresentação: redesenha a tela a cada tick.</td></tr>
+    <tr><td><code>ConfigLoader</code></td><td>Lê e valida o arquivo de configuração.</td></tr>
+  </table>
+  <p>Como o executor não guarda estado e todo o contexto está no PCB, trocar de processo é apenas trocar o PCB usado no próximo tick — por isso a troca de contexto custa zero.</p>
+</section>
+
+<!-- ====================== 11 ====================== -->
+<section>
+  <h2>11. Testes e validação</h2>
+  <ul>
+    <li><b>Gabaritos do enunciado</b> (cenários A, B e C): conferidos tick a tick — CPU, instrução, acc, filas, bloqueados, eventos, log e estatísticas.</li>
+    <li><b>Erros de sintaxe:</b> arquivos com erros propositais; cada erro é informado com a linha correta. <code>programas/erro1.asm</code> é um exemplo (label inexistente na linha 6).</li>
+    <li><b>Caso 1</b> (<code>configs/caso1.txt</code>): lê −7 pela <code>SYSCALL 2</code> e exercita <code>BRNEG</code>, <code>BRZERO</code>, <code>BRANY</code>, <code>MULT</code> e <code>DIV</code> com negativos (21 ÷ −2 = −10; −7 ÷ 2 = −3). Resultado: término 31, CPU 19, I/O 12.</li>
+    <li><b>Caso 2</b> (<code>configs/caso2.txt</code>): três processos; dois de mesma prioridade mostram o desempate FIFO na Fila 1, e o terceiro, ao voltar de I/O, interrompe duas vezes um processo da Fila 1, que volta ao topo do grupo com o quantum restante.</li>
+    <li><b>Fila 1:</b> <code>java -cp bin tests.QueueTest</code> confere a ordem de saída por prioridade e o retorno ao topo do grupo.</li>
+    <li><b>Portabilidade:</b> a saída das cinco configurações é idêntica, linha a linha, no Windows e no Linux, com JDK 8 e 21.</li>
+  </ul>
+  <p>Os resultados esperados dos casos 1 e 2, calculados à mão, estão nos comentários dos respectivos arquivos de configuração.</p>
+</section>
+
+<!-- ====================== 12 ====================== -->
+<section class="cont">
+  <h2>12. Limitações conhecidas</h2>
+  <ul>
+    <li>Um comentário precisa de espaço depois do <code>#</code>: <code>#comentario</code> é lido como operando e gera erro de sintaxe.</li>
+    <li>O arquivo de configuração não aceita comentário no fim de uma linha de processo, porque o caminho do programa pode conter espaços.</li>
+    <li>Nomes de variáveis e labels não aceitam letras acentuadas.</li>
+    <li>O modo apresentação precisa de um terminal interativo; no Git Bash do Windows a tela não é limpa entre os ticks.</li>
+  </ul>
+</section>
+
+</body>
+</html>
