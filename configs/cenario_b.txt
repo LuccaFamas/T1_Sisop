@@ -1,0 +1,3 @@
+# Cenário B: P02 sozinho
+# nome  chegada  prioridade  programa
+P02     1        5           programas/teste2.asm

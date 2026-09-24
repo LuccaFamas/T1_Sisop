@@ -1,0 +1,3 @@
+# Cenário A: P01 sozinho
+# nome  chegada  prioridade  programa
+P01     0        3           programas/teste1.asm

@@ -1,35 +1,33 @@
-import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
-import assembly.AssemblyParseException;
-import assembly.AssemblyParser;
 import process.PCB;
+import simulation.ConfigException;
+import simulation.ConfigLoader;
 import simulation.Monitor;
 import simulation.Scheduler;
 
-// Fase 5: cenários dos gabaritos fixos no código (A, B ou C).
-// Será substituído pela carga via configuração na Fase 6.
+// Uso: java Main [arquivo_de_configuracao]
 public class Main {
 
-    public static void main(String[] args)
-            throws IOException, AssemblyParseException {
+    private static final String DEFAULT_CONFIG = "configs/cenario_c.txt";
 
-        String scenario = args.length > 0 ? args[0].toUpperCase() : "C";
+    public static void main(String[] args) {
 
-        AssemblyParser parser = new AssemblyParser();
-        List<PCB> processes = new ArrayList<>();
+        String configPath = args.length > 0 ? args[0] : DEFAULT_CONFIG;
 
-        if (scenario.equals("A") || scenario.equals("C")) {
-            processes.add(new PCB("P1", 0, 3,
-                parser.parseFile(Paths.get("programas/teste1.asm"))));
+        List<PCB> processes;
+
+        try {
+            processes = new ConfigLoader().load(Paths.get(configPath));
+        } catch (ConfigException e) {
+            System.out.println("Erro na configuração: " + e.getMessage());
+            System.exit(1);
+            return;
         }
 
-        if (scenario.equals("B") || scenario.equals("C")) {
-            processes.add(new PCB("P2", 1, 5,
-                parser.parseFile(Paths.get("programas/teste2.asm"))));
-        }
+        System.out.println("Configuração: " + configPath);
+        System.out.println();
 
         Monitor monitor = new Monitor(processes);
         Scheduler scheduler = new Scheduler(processes, monitor);
@@ -39,7 +37,7 @@ public class Main {
 
         if (!scheduler.run()) {
             System.out.println("Limite de " + Scheduler.MAX_TICKS
-                + " ticks atingido: simulação interrompida");
+                + " ticks atingido: simulação interrompida (loop infinito?)");
         }
 
         monitor.printGantt(scheduler.getHistory());

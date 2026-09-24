@@ -1,0 +1,4 @@
+# Cenário C: exemplo do enunciado, P01 e P02 juntos
+# nome  chegada  prioridade  programa
+P01     0        3           programas/teste1.asm
+P02     1        5           programas/teste2.asm
