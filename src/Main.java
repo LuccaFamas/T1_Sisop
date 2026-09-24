@@ -9,7 +9,7 @@ import process.PCB;
 import simulation.Monitor;
 import simulation.Scheduler;
 
-// Fase 4: cenários dos gabaritos fixos no código (A, B ou C).
+// Fase 5: cenários dos gabaritos fixos no código (A, B ou C).
 // Será substituído pela carga via configuração na Fase 6.
 public class Main {
 
@@ -31,10 +31,10 @@ public class Main {
                 parser.parseFile(Paths.get("programas/teste2.asm"))));
         }
 
-        Monitor monitor = new Monitor();
+        Monitor monitor = new Monitor(processes);
         Scheduler scheduler = new Scheduler(processes, monitor);
 
-        System.out.println("Cenário " + scenario);
+        monitor.printProcesses();
         monitor.printHeader();
 
         if (!scheduler.run()) {
@@ -42,19 +42,7 @@ public class Main {
                 + " ticks atingido: simulação interrompida");
         }
 
-        System.out.println();
-
-        for (PCB pcb : scheduler.getProcesses()) {
-
-            int turnaround = pcb.getFinishTime() - pcb.getArrivalTime();
-
-            System.out.println(pcb.getName()
-                + ": término " + pcb.getFinishTime()
-                + " · TA " + turnaround
-                + " · CPU " + pcb.getCpuTime()
-                + " · I/O " + pcb.getIoTime()
-                + " · espera " + pcb.getWaitTime()
-                + " (TA-CPU-I/O = " + (turnaround - pcb.getCpuTime() - pcb.getIoTime()) + ")");
-        }
+        monitor.printGantt(scheduler.getHistory());
+        monitor.printStatistics();
     }
 }
