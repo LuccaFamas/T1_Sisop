@@ -4,6 +4,8 @@ import cpu.ExecutionResult;
 import process.PCB;
 import process.ProcessState;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 // Trata o que acontece depois de uma instrução: syscalls e erros.
@@ -13,7 +15,16 @@ public class OperatingSystem {
     // SYSCALL 1/2 no tick t: bloqueado em t+1, t+2, t+3; pronto em t+4
     private static final int IO_BLOCK_TICKS = 3;
 
-    private final Scanner keyboard = new Scanner(System.in);
+    // Um único leitor do teclado para o programa inteiro: a SYSCALL 2 e o
+    // painel (Enter) leem daqui. Dois Scanner no System.in se atrapalhariam.
+    static final Scanner KEYBOARD = new Scanner(System.in);
+
+    // Mensagens das syscalls, para o painel mostrar de novo
+    private final List<String> log = new ArrayList<>();
+
+    public List<String> getLog() {
+        return log;
+    }
 
     public void handleExecutionResult(
             ExecutionResult result,
@@ -43,9 +54,7 @@ public class OperatingSystem {
     // só que marcado como erro.
     public void handleExecutionError(PCB pcb, String message) {
 
-        System.out.println(
-            "[" + pcb.getName() + "] Erro de execução: " + message
-        );
+        say("[" + pcb.getName() + "] Erro de execução: " + message);
 
         pcb.setEndedWithError(true);
         pcb.setState(ProcessState.FINISHED);
@@ -53,9 +62,7 @@ public class OperatingSystem {
 
     private void handleHalt(PCB pcb) {
 
-        System.out.println(
-            "[" + pcb.getName() + "] Finalizado (SYSCALL 0)"
-        );
+        say("[" + pcb.getName() + "] Finalizado (SYSCALL 0)");
 
         pcb.setState(ProcessState.FINISHED);
     }
@@ -63,10 +70,8 @@ public class OperatingSystem {
     // Imprime no tick em que a SYSCALL executa (não no desbloqueio)
     private void handlePrint(PCB pcb, int currentTime) {
 
-        System.out.println(
-            "[" + pcb.getName() + "] Impressão (SYSCALL 1): "
-            + pcb.getAcc()
-        );
+        say("[" + pcb.getName() + "] Impressão (SYSCALL 1): "
+            + pcb.getAcc());
 
         blockProcess(pcb, currentTime);
     }
@@ -83,13 +88,13 @@ public class OperatingSystem {
 
             // Fim da entrada (Ctrl+Z/Ctrl+D ou arquivo redirecionado acabou):
             // sem isso o laço nunca terminaria.
-            if (!keyboard.hasNextLine()) {
+            if (!KEYBOARD.hasNextLine()) {
                 System.out.println();
                 handleExecutionError(pcb, "entrada encerrada durante SYSCALL 2");
                 return;
             }
 
-            String line = keyboard.nextLine().trim();
+            String line = KEYBOARD.nextLine().trim();
 
             try {
                 pcb.setAcc(Integer.parseInt(line));
@@ -99,11 +104,14 @@ public class OperatingSystem {
             }
         }
 
-        System.out.println(
-            "[" + pcb.getName() + "] Lido (SYSCALL 2): " + pcb.getAcc()
-        );
+        say("[" + pcb.getName() + "] Lido (SYSCALL 2): " + pcb.getAcc());
 
         blockProcess(pcb, currentTime);
+    }
+
+    private void say(String message) {
+        System.out.println(message);
+        log.add(message);
     }
 
     private void blockProcess(PCB pcb, int currentTime) {

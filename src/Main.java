@@ -4,11 +4,14 @@ import java.util.List;
 import process.PCB;
 import simulation.ConfigException;
 import simulation.ConfigLoader;
+import simulation.LivePanel;
 import simulation.Monitor;
 import simulation.Scheduler;
 
-// Uso: java Main [arquivo_de_configuracao] [milissegundos_por_UT]
-// Ex.: java Main configs/cenario_c.txt 500  -> cada UT dura 0,5 s na tela
+// Uso: java Main [arquivo_de_configuracao] [passo | milissegundos]
+//   sem 2º argumento : tabela com todos os ticks
+//   passo            : painel redesenhado a cada tick, avança com Enter
+//   500              : painel que avança sozinho a cada 500 ms
 public class Main {
 
     private static final String DEFAULT_CONFIG = "configs/cenario_c.txt";
@@ -17,20 +20,29 @@ public class Main {
 
         String configPath = args.length > 0 ? args[0] : DEFAULT_CONFIG;
 
-        int tickDelayMillis = 0;
+        LivePanel livePanel = null;
 
         if (args.length > 1) {
-            try {
-                tickDelayMillis = Integer.parseInt(args[1]);
-            } catch (NumberFormatException e) {
-                tickDelayMillis = -1;
-            }
 
-            if (tickDelayMillis < 0) {
-                System.out.println("Milissegundos por UT inválido: " + args[1]
-                    + " (use um inteiro >= 0, ex.: 500)");
-                System.exit(1);
-                return;
+            if (args[1].equalsIgnoreCase("passo")) {
+                livePanel = new LivePanel(true, 0);
+            } else {
+                int delayMillis;
+
+                try {
+                    delayMillis = Integer.parseInt(args[1]);
+                } catch (NumberFormatException e) {
+                    delayMillis = -1;
+                }
+
+                if (delayMillis < 0) {
+                    System.out.println("Modo inválido: " + args[1]
+                        + " (use 'passo' ou milissegundos, ex.: 500)");
+                    System.exit(1);
+                    return;
+                }
+
+                livePanel = new LivePanel(false, delayMillis);
             }
         }
 
@@ -44,16 +56,19 @@ public class Main {
             return;
         }
 
-        System.out.println("Configuração: " + configPath);
-        System.out.println();
-
         Monitor monitor = new Monitor(processes);
         Scheduler scheduler = new Scheduler(processes, monitor);
 
-        monitor.printProcesses();
-        monitor.printHeader();
+        if (livePanel == null) {
+            System.out.println("Configuração: " + configPath);
+            System.out.println();
+            monitor.printProcesses();
+            monitor.printHeader();
+        } else {
+            scheduler.setLivePanel(livePanel);
+        }
 
-        if (!scheduler.run(tickDelayMillis)) {
+        if (!scheduler.run()) {
             System.out.println("Limite de " + Scheduler.MAX_TICKS
                 + " ticks atingido: simulação interrompida (loop infinito?)");
         }

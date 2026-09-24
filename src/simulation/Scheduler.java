@@ -42,6 +42,9 @@ public class Scheduler {
 
     private final List<TickSnapshot> history;
 
+    // null = saída em tabela (padrão)
+    private LivePanel livePanel;
+
     public Scheduler(List<PCB> processes, Monitor monitor) {
 
         // Ordem crescente de nome: desempate determinístico quando
@@ -71,10 +74,13 @@ public class Scheduler {
         return history;
     }
 
-    // Devolve false se parou pelo limite de segurança.
-    // tickDelayMillis: pausa real entre ticks, só para acompanhar a saída
-    // (0 = sem pausa). Não muda nada no resultado da simulação.
-    public boolean run(int tickDelayMillis) {
+    // Com painel, a tela é redesenhada a cada tick no lugar da tabela
+    public void setLivePanel(LivePanel livePanel) {
+        this.livePanel = livePanel;
+    }
+
+    // Devolve false se parou pelo limite de segurança
+    public boolean run() {
 
         while (!allFinished()) {
 
@@ -84,23 +90,9 @@ public class Scheduler {
 
             tick();
             time++;
-
-            if (tickDelayMillis > 0 && !allFinished()) {
-                pause(tickDelayMillis);
-            }
         }
 
         return true;
-    }
-
-    private void pause(int millis) {
-
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            // Mantém o sinal de interrupção; a simulação segue sem pausa
-            Thread.currentThread().interrupt();
-        }
     }
 
     private void tick() {
@@ -179,7 +171,11 @@ public class Scheduler {
             executeRunning(snapshot);
         }
 
-        monitor.printTick(snapshot);
+        if (livePanel == null) {
+            monitor.printTick(snapshot);
+        } else {
+            livePanel.show(snapshot, history, processes, os.getLog());
+        }
     }
 
     private void executeRunning(TickSnapshot snapshot) {

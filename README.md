@@ -22,14 +22,20 @@ O script compila tudo do zero em `bin/` e já executa a simulação.
 
 Sem argumento, usa `configs/cenario_c.txt` (exemplo do enunciado).
 
-Um segundo argumento opcional define quantos milissegundos cada UT dura
-na tela, para acompanhar a simulação tick a tick (padrão 0, sem pausa).
-A pausa só afeta a exibição, não o resultado:
+### Modo de apresentação (painel)
+
+Um segundo argumento troca a tabela por um painel que limpa a tela e
+mostra um tick por vez: o que está na CPU, as filas, os bloqueados, o
+estado de cada processo, o Gantt até ali e as mensagens das syscalls.
+Só muda a exibição; o resultado é o mesmo.
 
 ```
-build.bat configs\cenario_c.txt 500      (cada UT dura 0,5 s)
-./build.sh configs/cenario_c.txt 500
+build.bat configs\cenario_c.txt passo    (avança um tick a cada Enter)
+build.bat configs\cenario_c.txt 800      (avança sozinho a cada 800 ms)
+./build.sh configs/cenario_c.txt passo
 ```
+
+Ao fim, mostra o Gantt completo e as estatísticas, como no modo tabela.
 
 Programas com `SYSCALL 2` pedem um inteiro pelo teclado. Para testes
 reproduzíveis, a entrada pode vir de um arquivo:

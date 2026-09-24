@@ -210,7 +210,7 @@ public class Monitor {
             (double) waitSum / finishedCount));
     }
 
-    private String stateName(ProcessState state) {
+    static String stateName(ProcessState state) {
 
         switch (state) {
             case READY:
