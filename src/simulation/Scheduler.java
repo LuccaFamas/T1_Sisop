@@ -71,8 +71,10 @@ public class Scheduler {
         return history;
     }
 
-    // Devolve false se parou pelo limite de segurança
-    public boolean run() {
+    // Devolve false se parou pelo limite de segurança.
+    // tickDelayMillis: pausa real entre ticks, só para acompanhar a saída
+    // (0 = sem pausa). Não muda nada no resultado da simulação.
+    public boolean run(int tickDelayMillis) {
 
         while (!allFinished()) {
 
@@ -82,9 +84,23 @@ public class Scheduler {
 
             tick();
             time++;
+
+            if (tickDelayMillis > 0 && !allFinished()) {
+                pause(tickDelayMillis);
+            }
         }
 
         return true;
+    }
+
+    private void pause(int millis) {
+
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            // Mantém o sinal de interrupção; a simulação segue sem pausa
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void tick() {

@@ -22,6 +22,15 @@ O script compila tudo do zero em `bin/` e já executa a simulação.
 
 Sem argumento, usa `configs/cenario_c.txt` (exemplo do enunciado).
 
+Um segundo argumento opcional define quantos milissegundos cada UT dura
+na tela, para acompanhar a simulação tick a tick (padrão 0, sem pausa).
+A pausa só afeta a exibição, não o resultado:
+
+```
+build.bat configs\cenario_c.txt 500      (cada UT dura 0,5 s)
+./build.sh configs/cenario_c.txt 500
+```
+
 Programas com `SYSCALL 2` pedem um inteiro pelo teclado. Para testes
 reproduzíveis, a entrada pode vir de um arquivo:
 
