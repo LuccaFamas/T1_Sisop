@@ -5,105 +5,56 @@ import java.util.List;
 
 import assembly.AssemblyParseException;
 import assembly.AssemblyParser;
-import assembly.Program;
-import cpu.ExecutionException;
-import cpu.ExecutionResult;
-import cpu.InstructionExecutor;
 import process.PCB;
-import process.ProcessState;
-import simulation.OperatingSystem;
+import simulation.Monitor;
+import simulation.Scheduler;
 
-// Fase 2: executa cada processo até o fim, instrução por instrução,
-// SEM escalonador (um processo depois do outro). Será substituído
-// pela carga via configuração na Fase 6.
+// Fase 4: cenários dos gabaritos fixos no código (A, B ou C).
+// Será substituído pela carga via configuração na Fase 6.
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args)
+            throws IOException, AssemblyParseException {
 
-        String[] files = args;
-
-        // Padrão: dois processos com o MESMO programa. Se a memória
-        // fosse compartilhada, P02 leria valor = 15 e imprimiria 20.
-        if (files.length == 0) {
-            files = new String[] {
-                "programas/teste1.asm",
-                "programas/teste1.asm"
-            };
-        }
+        String scenario = args.length > 0 ? args[0].toUpperCase() : "C";
 
         AssemblyParser parser = new AssemblyParser();
         List<PCB> processes = new ArrayList<>();
 
-        for (int i = 0; i < files.length; i++) {
-
-            try {
-                Program program = parser.parseFile(Paths.get(files[i]));
-                String name = String.format("P%02d", i + 1);
-                processes.add(new PCB(name, 0, 3, program));
-            } catch (AssemblyParseException e) {
-                System.out.println("Erro de sintaxe: " + e.getMessage());
-                return;
-            } catch (IOException e) {
-                System.out.println("Erro ao ler arquivo: " + e.getMessage());
-                return;
-            }
+        if (scenario.equals("A") || scenario.equals("C")) {
+            processes.add(new PCB("P1", 0, 3,
+                parser.parseFile(Paths.get("programas/teste1.asm"))));
         }
 
-        InstructionExecutor executor = new InstructionExecutor();
-        OperatingSystem os = new OperatingSystem();
-
-        for (PCB pcb : processes) {
-
-            System.out.println("=== " + pcb.getName()
-                + " (" + pcb.getProgram().getSourceName() + ")");
-
-            int time = 0;
-
-            while (pcb.getState() != ProcessState.FINISHED) {
-
-                int pc = pcb.getPc();
-                String text = pc < pcb.getProgram().getInstructions().size()
-                    ? pcb.getProgram().getInstructions().get(pc).toString()
-                    : "(fora do programa)";
-
-                pcb.setState(ProcessState.RUNNING);
-
-                try {
-                    ExecutionResult result = executor.execute(pcb);
-                    os.handleExecutionResult(result, pcb, time);
-                } catch (ExecutionException e) {
-                    os.handleExecutionError(pcb, e.getMessage());
-                }
-
-                System.out.println(String.format(
-                    "  t=%-2d pc=%-2d %-14s -> acc=%d, próximo pc=%d, %s",
-                    time, pc, text, pcb.getAcc(), pcb.getPc(), pcb.getState()));
-
-                // Sem escalonador: o bloqueio é só registrado e o
-                // processo segue direto.
-                if (pcb.getState() == ProcessState.BLOCKED) {
-                    pcb.setState(ProcessState.READY);
-                }
-
-                time++;
-            }
-
-            System.out.println("  memória final: "
-                + pcb.getProgram().getData().keySet() + " = "
-                + memoryValues(pcb)
-                + (pcb.hasEndedWithError() ? "  (erro)" : ""));
-            System.out.println();
-        }
-    }
-
-    private static String memoryValues(PCB pcb) {
-
-        List<Integer> values = new ArrayList<>();
-
-        for (String name : pcb.getProgram().getData().keySet()) {
-            values.add(pcb.getMemory().get(name));
+        if (scenario.equals("B") || scenario.equals("C")) {
+            processes.add(new PCB("P2", 1, 5,
+                parser.parseFile(Paths.get("programas/teste2.asm"))));
         }
 
-        return values.toString();
+        Monitor monitor = new Monitor();
+        Scheduler scheduler = new Scheduler(processes, monitor);
+
+        System.out.println("Cenário " + scenario);
+        monitor.printHeader();
+
+        if (!scheduler.run()) {
+            System.out.println("Limite de " + Scheduler.MAX_TICKS
+                + " ticks atingido: simulação interrompida");
+        }
+
+        System.out.println();
+
+        for (PCB pcb : scheduler.getProcesses()) {
+
+            int turnaround = pcb.getFinishTime() - pcb.getArrivalTime();
+
+            System.out.println(pcb.getName()
+                + ": término " + pcb.getFinishTime()
+                + " · TA " + turnaround
+                + " · CPU " + pcb.getCpuTime()
+                + " · I/O " + pcb.getIoTime()
+                + " · espera " + pcb.getWaitTime()
+                + " (TA-CPU-I/O = " + (turnaround - pcb.getCpuTime() - pcb.getIoTime()) + ")");
+        }
     }
 }

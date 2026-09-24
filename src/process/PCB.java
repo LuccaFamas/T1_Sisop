@@ -27,6 +27,16 @@ public class PCB {
     // Encerrado por erro de execução (divisão por zero, PC fora do programa)
     private boolean endedWithError;
 
+    // Escalonamento: fila atual (0 ou 1) e UTs restantes do quantum
+    private int queueLevel;
+    private int quantumRemaining;
+
+    // Estatísticas, em ticks
+    private int cpuTime;
+    private int waitTime;
+    private int ioTime;
+    private int finishTime;
+
     public PCB(String name, int arrivalTime, int priority, Program program) {
         this.name = name;
         this.arrivalTime = arrivalTime;
@@ -42,6 +52,14 @@ public class PCB {
 
         this.blockedUntil = -1;
         this.endedWithError = false;
+
+        this.queueLevel = 0;
+        this.quantumRemaining = 0;
+
+        this.cpuTime = 0;
+        this.waitTime = 0;
+        this.ioTime = 0;
+        this.finishTime = -1;
     }
 
     public String getName() {
@@ -102,5 +120,53 @@ public class PCB {
 
     public void setEndedWithError(boolean endedWithError) {
         this.endedWithError = endedWithError;
+    }
+
+    public int getQueueLevel() {
+        return queueLevel;
+    }
+
+    public void setQueueLevel(int queueLevel) {
+        this.queueLevel = queueLevel;
+    }
+
+    public int getQuantumRemaining() {
+        return quantumRemaining;
+    }
+
+    public void setQuantumRemaining(int quantumRemaining) {
+        this.quantumRemaining = quantumRemaining;
+    }
+
+    public int getCpuTime() {
+        return cpuTime;
+    }
+
+    public void addCpuTime() {
+        cpuTime++;
+    }
+
+    public int getWaitTime() {
+        return waitTime;
+    }
+
+    public void addWaitTime() {
+        waitTime++;
+    }
+
+    public int getIoTime() {
+        return ioTime;
+    }
+
+    public void addIoTime() {
+        ioTime++;
+    }
+
+    public int getFinishTime() {
+        return finishTime;
+    }
+
+    public void setFinishTime(int finishTime) {
+        this.finishTime = finishTime;
     }
 }
